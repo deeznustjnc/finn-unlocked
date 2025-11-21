@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finn Unlocked v1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes gradient-flow { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-15px); } }
+        .animate-title { background-size: 200% 200%; animation: gradient-flow 3s ease infinite, float 3s ease-in-out infinite; }
+        .browser-container { display: none; }
+        .browser-container.active { display: block; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 text-white min-h-screen">
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-20 left-20 w-72 h-72 bg-pink-500/20 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute bottom-20 right-20 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
+    </div>
+    <nav class="fixed top-0 w-full z-50 bg-indigo-900/80 backdrop-blur-md border-b border-purple-700/50">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="text-xl font-bold">Finn Unlocked</div>
+                <div class="flex items-center gap-6">
+                    <a href="#" onclick="showSection('home'); return false;" class="hover:text-pink-400">home</a>
+                    <a href="#" onclick="showSection('browser'); return false;" class="hover:text-pink-400">browser</a>
+                    <a href="#" onclick="showSection('games'); return false;" class="hover:text-pink-400">games</a>
+                    <a href="#" onclick="showSection('apps'); return false;" class="hover:text-pink-400">apps</a>
+                    <a href="#" onclick="showSection('settings'); return false;" class="hover:text-pink-400">settings</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div id="homeSection" class="flex flex-col items-center justify-center min-h-screen px-6 relative z-10">
+        <div class="text-center space-y-8 max-w-4xl">
+            <h1 class="text-7xl font-bold"><span class="bg-clip-text text-transparent bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 animate-title">Finn Unlocked v1</span></h1>
+            <p class="text-2xl text-purple-200">the revival.</p>
+            <div id="proxyStatus"><span id="statusText" class="text-purple-300">Loading Scramjet...</span></div>
+            <div class="mt-12">
+                <div class="relative max-w-2xl mx-auto">
+                    <input type="text" id="urlInput" placeholder="search the web freely" class="w-full px-6 py-4 bg-purple-900/50 border border-purple-700 rounded-full text-lg placeholder-purple-300 focus:outline-none focus:border-pink-500"/>
+                    <button onclick="navigate()" class="absolute right-2 top-1/2 -translate-y-1/2 px-6 py-2 bg-pink-600 hover:bg-pink-700 rounded-full font-semibold">GO</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="browserSection" class="browser-container pt-20 px-4 pb-4 relative z-10">
+        <div class="max-w-7xl mx-auto">
+            <div class="bg-purple-900/50 rounded-t-lg p-3 flex items-center gap-3">
+                <button onclick="goBack()" class="px-3 py-2 hover:bg-purple-800/50 rounded">&larr;</button>
+                <button onclick="goForward()" class="px-3 py-2 hover:bg-purple-800/50 rounded">&rarr;</button>
+                <button onclick="reloadBrowser()" class="px-3 py-2 hover:bg-purple-800/50 rounded">↻</button>
+                <input type="text" id="browserUrlInput" placeholder="Enter URL..." class="flex-1 px-4 py-2 bg-purple-900/70 border border-purple-700 rounded-full text-sm"/>
+                <button onclick="showSection('home')" class="px-3 py-2 hover:bg-purple-800/50 rounded">&times;</button>
+            </div>
+            <div class="bg-white rounded-b-lg overflow-hidden" style="height: calc(100vh - 180px);"><iframe id="browserFrame" class="w-full h-full border-0"></iframe></div>
+        </div>
+    </div>
+    <div id="gamesSection" class="browser-container pt-24 px-6 relative z-10 min-h-screen"><div class="max-w-6xl mx-auto"><h2 class="text-4xl font-bold mb-8 text-center text-pink-400">Games</h2><p class="text-center text-purple-300">Coming Soon</p></div></div>
+    <div id="appsSection" class="browser-container pt-24 px-6 relative z-10 min-h-screen"><div class="max-w-6xl mx-auto"><h2 class="text-4xl font-bold mb-8 text-center text-pink-400">Apps</h2><p class="text-center text-purple-300">Coming Soon</p></div></div>
+    <div id="settingsSection" class="browser-container pt-24 px-6 relative z-10 min-h-screen"><div class="max-w-6xl mx-auto"><h2 class="text-4xl font-bold mb-8 text-center text-pink-400">Settings</h2><p class="text-center text-purple-300">Coming Soon</p></div></div>
+    <div class="fixed bottom-0 w-full py-4 text-center text-purple-300 text-sm z-10">Finn Unlocked v1 • powered by Scramjet</div>
+    <script src="/scram/scramjet.bundle.js"></script>
+    <script src="/scram/scramjet.config.js"></script>
+    <script>
+        var proxyReady = false;
+        var scramjet = null;
+        async function initProxy() {
+            try {
+                scramjet = new ScramjetController({
+                    prefix: '/service/',
+                    files: {
+                        wasm: '/scram/b806f43d79bff8f4.wasm',
+                        worker: '/scram/scramjet.worker.js',
+                        sync: '/scram/scramjet.sync.js',
+                        client: '/scram/scramjet.bundle.js'
+                    }
+                });
+                await scramjet.init('/scram/scramjet.worker.js');
+                proxyReady = true;
+                document.getElementById('statusText').textContent = '✓ Scramjet ready!';
+                document.getElementById('statusText').className = 'text-green-400 font-semibold';
+            } catch (err) {
+                console.error('Scramjet error:', err);
+                document.getElementById('statusText').textContent = '⚠ ' + err.message;
+                document.getElementById('statusText').className = 'text-red-400';
+            }
+        }
+        window.addEventListener('load', initProxy);
+        function showSection(s) {
+            document.getElementById('homeSection').style.display = 'none';
+            ['browser','games','apps','settings'].forEach(function(x) { document.getElementById(x+'Section').classList.remove('active'); });
+            if (s === 'home') document.getElementById('homeSection').style.display = 'flex';
+            else document.getElementById(s+'Section').classList.add('active');
+        }
+        function processUrl(u) {
+            if (!u) return '';
+            u = u.trim();
+            if (u.indexOf('http://') !== 0 && u.indexOf('https://') !== 0) {
+                if (u.indexOf('.') !== -1 && u.indexOf(' ') === -1) u = 'https://' + u;
+                else u = 'https://www.google.com/search?q=' + encodeURIComponent(u);
+            }
+            return u;
+        }
+        function navigate() {
+            var url = processUrl(document.getElementById('urlInput').value);
+            if (!url || !proxyReady) { alert('Proxy not ready'); return; }
+            document.getElementById('browserUrlInput').value = url;
+            document.getElementById('browserFrame').src = scramjet.encodeUrl(url);
+            showSection('browser');
+        }
+        function navigateFromBrowser() {
+            var url = processUrl(document.getElementById('browserUrlInput').value);
+            if (!url || !proxyReady) return;
+            document.getElementById('browserFrame').src = scramjet.encodeUrl(url);
+        }
+        function reloadBrowser() { document.getElementById('browserFrame').src = document.getElementById('browserFrame').src; }
+        function goBack() { try { document.getElementById('browserFrame').contentWindow.history.back(); } catch(e) {} }
+        function goForward() { try { document.getElementById('browserFrame').contentWindow.history.forward(); } catch(e) {} }
+        document.getElementById('urlInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') navigate(); });
+        document.getElementById('browserUrlInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') navigateFromBrowser(); });
+    </script>
+</body>
+</html>
