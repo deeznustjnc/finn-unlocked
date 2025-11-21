@@ -61,16 +61,28 @@
     <div id="appsSection" class="browser-container pt-24 px-6 relative z-10 min-h-screen"><div class="max-w-6xl mx-auto"><h2 class="text-4xl font-bold mb-8 text-center text-pink-400">Apps</h2><p class="text-center text-purple-300">Coming Soon</p></div></div>
     <div id="settingsSection" class="browser-container pt-24 px-6 relative z-10 min-h-screen"><div class="max-w-6xl mx-auto"><h2 class="text-4xl font-bold mb-8 text-center text-pink-400">Settings</h2><p class="text-center text-purple-300">Coming Soon</p></div></div>
     <div class="fixed bottom-0 w-full py-4 text-center text-purple-300 text-sm z-10">Finn Unlocked v1 • powered by Scramjet</div>
-    <script src="/scram/scramjet.config.js"></script>
+    <script>
+        window.$scramjet = {
+            config: {
+                prefix: "/service/",
+                codec: "plain",
+                wasm: "/scram/b806f43d79bff8f4.wasm",
+                worker: "/scram/scramjet.worker.js",
+                client: "/scram/scramjet.bundle.js",
+                sync: "/scram/scramjet.sync.js"
+            }
+        };
+    </script>
     <script src="/scram/scramjet.bundle.js"></script>
     <script>
         var proxyReady = false;
-        var scramjet = null;
+        var controller = null;
+        
         async function initProxy() {
             try {
-                const { ScramjetController } = await import('/scram/scramjet.bundle.js');
-                scramjet = new ScramjetController($scramjet.config);
-                await scramjet.init('/scram/scramjet.worker.js');
+                var loaded = $scramjetLoad();
+                controller = new loaded.ScramjetController($scramjet.config);
+                await controller.init('/scram/scramjet.worker.js');
                 proxyReady = true;
                 document.getElementById('statusText').textContent = '✓ Scramjet ready!';
                 document.getElementById('statusText').className = 'text-green-400 font-semibold';
@@ -80,13 +92,16 @@
                 document.getElementById('statusText').className = 'text-red-400';
             }
         }
+        
         window.addEventListener('load', initProxy);
+        
         function showSection(s) {
             document.getElementById('homeSection').style.display = 'none';
             ['browser','games','apps','settings'].forEach(function(x) { document.getElementById(x+'Section').classList.remove('active'); });
             if (s === 'home') document.getElementById('homeSection').style.display = 'flex';
             else document.getElementById(s+'Section').classList.add('active');
         }
+        
         function processUrl(u) {
             if (!u) return '';
             u = u.trim();
@@ -96,18 +111,21 @@
             }
             return u;
         }
+        
         function navigate() {
             var url = processUrl(document.getElementById('urlInput').value);
             if (!url || !proxyReady) { alert('Proxy not ready'); return; }
             document.getElementById('browserUrlInput').value = url;
-            document.getElementById('browserFrame').src = scramjet.encodeUrl(url);
+            document.getElementById('browserFrame').src = controller.encodeUrl(url);
             showSection('browser');
         }
+        
         function navigateFromBrowser() {
             var url = processUrl(document.getElementById('browserUrlInput').value);
             if (!url || !proxyReady) return;
-            document.getElementById('browserFrame').src = scramjet.encodeUrl(url);
+            document.getElementById('browserFrame').src = controller.encodeUrl(url);
         }
+        
         function reloadBrowser() { document.getElementById('browserFrame').src = document.getElementById('browserFrame').src; }
         function goBack() { try { document.getElementById('browserFrame').contentWindow.history.back(); } catch(e) {} }
         function goForward() { try { document.getElementById('browserFrame').contentWindow.history.forward(); } catch(e) {} }
