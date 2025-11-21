@@ -73,16 +73,31 @@
     <div id="appsSection" class="browser-container pt-24 px-6 relative z-10 min-h-screen"><div class="max-w-6xl mx-auto"><h2 class="text-4xl font-bold mb-8 text-center text-pink-400">Apps</h2><p class="text-center text-purple-300">Coming Soon</p></div></div>
     <div id="settingsSection" class="browser-container pt-24 px-6 relative z-10 min-h-screen"><div class="max-w-6xl mx-auto"><h2 class="text-4xl font-bold mb-8 text-center text-pink-400">Settings</h2><p class="text-center text-purple-300">Coming Soon</p></div></div>
     <div class="fixed bottom-0 w-full py-4 text-center text-purple-300 text-sm z-10">Finn Unlocked v1 • powered by Scramjet</div>
-    <script src="/scram/scramjet.bundle.js"></script>
     <script>
         var proxyReady = false;
         var controller = null;
         
+        function loadScript(src) {
+            return new Promise(function(resolve, reject) {
+                var script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+        
         async function initProxy() {
             try {
+                document.getElementById('statusText').textContent = 'Loading bundle...';
+                await loadScript('/scram/scramjet.bundle.js');
+                
+                document.getElementById('statusText').textContent = 'Initializing...';
+                
                 if (typeof globalThis.$scramjetLoad !== 'function') {
-                    throw new Error('Scramjet bundle not loaded');
+                    throw new Error('$scramjetLoad not found after loading bundle');
                 }
+                
                 var { ScramjetController } = globalThis.$scramjetLoad();
                 controller = new ScramjetController($scramjet.config);
                 await controller.init('/scram/scramjet.worker.js');
